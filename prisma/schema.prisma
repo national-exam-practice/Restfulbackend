@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(uuid())
+  email      String    @unique
+  password   String
+  name       String
+  role       Role      @default(USER)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relations
+  ownedParks Park[]
+  requests   Request[]
+}
+
+enum Role {
+  ADMIN
+  OWNER
+  USER
+}
+
+model Park {
+  id           String      @id @default(uuid())
+  name         String
+  address      String
+  totalSpots   Int
+  hourlyRate   Float
+  description  String?
+  isApproved   Boolean     @default(false)
+  ownerId      String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  // Relations
+  owner        User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  spots        Spot[]
+  requests     Request[]
+}
+
+model Spot {
+  id          String      @id @default(uuid())
+  spotNumber  String
+  isOccupied  Boolean     @default(false)
+  parkId      String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  park        Park        @relation(fields: [parkId], references: [id], onDelete: Cascade)
+  requests    Request[]
+}
+
+model Request {
+  id           String        @id @default(uuid())
+  startTime    DateTime
+  endTime      DateTime
+  status       RequestStatus @default(PENDING)
+  userId       String
+  parkId       String
+  spotId       String
+  totalAmount  Float
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  park         Park          @relation(fields: [parkId], references: [id], onDelete: Cascade)
+  spot         Spot          @relation(fields: [spotId], references: [id], onDelete: Cascade)
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}

@@ -4,7 +4,7 @@ const prisma = require('../models');
 const { ApiError } = require('../utils/errors');
 
 const registerUser = async (userData) => {
-  const { email, password, name, role = 'USER' } = userData;
+  const { email, password, firstname,lastname, role = 'USER' } = userData;
 
   // Check if user already exists
   const existingUser = await prisma.user.findUnique({
@@ -24,7 +24,8 @@ const registerUser = async (userData) => {
     data: {
       email,
       password: hashedPassword,
-      name,
+      lastname,
+      firstname,
       role
     }
   });
@@ -34,8 +35,10 @@ const registerUser = async (userData) => {
     message: 'User registered successfully',
     id: user.id,
     email: user.email,
-    name: user.name,
+    firstname: user.firstname,
+    lastname: user.lastname,
     role: user.role,
+
   };
 };
 
@@ -63,7 +66,8 @@ const loginUser = async ({ email, password }) => {
     message: 'User logged in successfully',
     id: user.id,
     email: user.email,
-    name: user.name,
+    firstname: user.firstname,  
+    lastname: user.lastname,
     role: user.role,
     token
   };

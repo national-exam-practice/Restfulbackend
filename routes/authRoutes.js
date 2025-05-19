@@ -25,9 +25,12 @@
  *                 format: password
  *                 minLength: 8
  *                 description: User password (min 8 characters)
- *               name:
+ *               firstname:
  *                 type: string
- *                 description: User name
+ *                 description: User firstname name
+ *               lastname:
+ *                type: string
+ *                description: User lastname name
  *               role:
  *                 type: string
  *                 enum: [USER, ADMIN]
@@ -144,10 +147,46 @@
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+/**
+ * @swagger
+ * /api/v1/auth/logout:
+ *   post:
+ *     summary: Logout the current user
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully logged out
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Logged out successfully"
+ *       401:
+ *         description: Not authenticated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 
 const express = require('express');
 const { body } = require('express-validator');
-const { register, login, getMe } = require('../controllers/authController');
+const { register, login, getMe ,logout} = require('../controllers/authController');
+// const {}
 const { protect } = require('../middlewares/authMiddleware');
 const router = express.Router();
 
@@ -157,7 +196,8 @@ router.post(
   [
     body('email').isEmail().withMessage('Please provide a valid email'),
     body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
-    body('name').notEmpty().withMessage('Name is required')
+    body('firstname').notEmpty().withMessage('Firstname is required'),
+    body('lastname').notEmpty().withMessage('lastname is required')
   ],
   register
 );
@@ -174,5 +214,7 @@ router.post(
 
 // Get current user route
 router.get('/me', protect, getMe);
+// Logout route 
+router.post('/logout', protect, logout);
 
 module.exports = router;

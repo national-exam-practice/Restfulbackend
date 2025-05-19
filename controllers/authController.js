@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator');
 const { ApiError } = require('../utils/errors');
 const authService = require('../services/aurhService');
+const { addToBlocklist } = require('../services/tokernService');
 
 const register = async (req, res, next) => {
   try {
@@ -45,9 +46,30 @@ const getMe = async (req, res, next) => {
       data: {
         id: req.user.id,
         email: req.user.email,
-        name: req.user.name,
+        firstname: req.user.firstname,
+        lastname: req.user.lastname,
         role: req.user.role
       }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// This is to logout
+const logout = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return next(new ApiError('No token provided', 400));
+    }
+
+    // Add token to blocklist
+    await addToBlocklist(token);
+
+    res.status(200).json({
+      success: true,
+      message: 'Logged out successfully'
     });
   } catch (error) {
     next(error);
@@ -57,5 +79,6 @@ const getMe = async (req, res, next) => {
 module.exports = {
   register,
   login,
-  getMe
+  getMe,
+  logout,
 };

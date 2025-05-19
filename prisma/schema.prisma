@@ -7,11 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model BlockedToken {
+  id       String   @id @default(uuid())
+  token    String   @unique
+  expiresAt DateTime
+}
+
 model User {
   id         String    @id @default(uuid())
   email      String    @unique
   password   String
-  name       String
+  firstname String
+  lastname  String
   role       Role      @default(USER)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
@@ -57,6 +64,7 @@ model Spot {
   park        Park        @relation(fields: [parkId], references: [id], onDelete: Cascade)
   requests    Request[]
 }
+
 
 model Request {
   id           String        @id @default(uuid())

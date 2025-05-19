@@ -594,7 +594,7 @@ const parkController = require('../controllers/parkController');
 const router = express.Router();
 
 // Protect all routes
-router.use(protect);
+// router.use(protect);
 
 // Create a new park (Owner only)
 router.post(
@@ -613,13 +613,13 @@ router.post(
 router.get('/', parkController.getAllParks);
 
 // Get my parks (Owner only)
-router.get('/my-parks', authorize('OWNER'), parkController.getMyParks);
+router.get('/my-parks',protect ,authorize('OWNER'), parkController.getMyParks);
 
 // Get parks pending approval (Admin only)
-router.get('/pending', authorize('ADMIN'), parkController.getPendingParks);
+router.get('/pending', protect,authorize('ADMIN'), parkController.getPendingParks);
 
 // Get park by ID
-router.get('/:id', parkController.getParkById);
+router.get('/:id',protect, parkController.getParkById);
 
 // Update park (Owner of the park or Admin)
 router.put(
@@ -628,14 +628,14 @@ router.put(
     body('name').optional().notEmpty().withMessage('Park name cannot be empty'),
     body('address').optional().notEmpty().withMessage('Address cannot be empty'),
     body('hourlyRate').optional().isFloat({ min: 0 }).withMessage('Hourly rate must be a positive number')
-  ],
+  ],protect,
   parkController.updatePark
 );
 
 // Approve or reject park (Admin only)
-router.patch('/:id/approve', authorize('ADMIN'), parkController.approvePark);
+router.patch('/:id/approve', protect,authorize('ADMIN'), parkController.approvePark);
 
 // Delete park (Owner of the park or Admin)
-router.delete('/:id', parkController.deletePark);
+router.delete('/:id',protect, parkController.deletePark);
 
 module.exports = router;

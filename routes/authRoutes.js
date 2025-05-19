@@ -197,7 +197,8 @@ router.post(
     body('email').isEmail().withMessage('Please provide a valid email'),
     body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
     body('firstname').notEmpty().withMessage('Firstname is required'),
-    body('lastname').notEmpty().withMessage('lastname is required')
+    body('lastname').notEmpty().withMessage('lastname is required'),
+    body('role').notEmpty().withMessage('role is required')
   ],
   register
 );

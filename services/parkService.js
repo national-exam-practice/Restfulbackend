@@ -34,7 +34,8 @@ const getAllParks = async (filters = {}) => {
     include: {
       owner: {
         select: {
-          name: true,
+          firstname: true,  
+          lastname: true, 
           email: true
         }
       },
@@ -56,12 +57,13 @@ const getPendingParks = async () => {
       isApproved: false
     },
     include: {
-      owner: {
+   owner: {
         select: {
-          name: true,
+          firstname: true,  
+          lastname: true, 
           email: true
         }
-      }
+      },
     }
   });
 
@@ -75,9 +77,10 @@ const getParkById = async (parkId) => {
       id: parkId
     },
     include: {
-      owner: {
+        owner: {
         select: {
-          name: true,
+          firstname: true,  
+          lastname: true, 
           email: true
         }
       },

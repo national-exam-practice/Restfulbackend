@@ -132,7 +132,8 @@ const getParkOwnerRequests = async (ownerId) => {
     include: {
       user: {
         select: {
-          name: true,
+          lastname: true,
+          firstname: true,
           email: true
         }
       },
@@ -166,7 +167,8 @@ const getRequestById = async (requestId, userId, userRole) => {
       user: {
         select: {
           id: true,
-          name: true,
+          lastname: true,
+          firstname: true,
           email: true
         }
       },
@@ -257,7 +259,9 @@ const updateRequestStatus = async (requestId, status, userId) => {
     include: {
       user: {
         select: {
-          name: true,
+          // name: true,
+          lastname: true,
+          firstname: true,
           email: true
         }
       },

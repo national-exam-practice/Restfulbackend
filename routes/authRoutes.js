@@ -188,6 +188,7 @@ const { body } = require('express-validator');
 const { register, login, getMe ,logout} = require('../controllers/authController');
 // const {}
 const { protect } = require('../middlewares/authMiddleware');
+const { resetPassword } = require('../controllers/authController');
 const router = express.Router();
 
 // Register route
@@ -217,5 +218,15 @@ router.post(
 router.get('/me', protect, getMe);
 // Logout route 
 router.post('/logout', protect, logout);
+
+// This is the route to reset password
+router.post('/reset-password',
+  [
+      body('email').isEmail().withMessage('Please provide a valid email'),
+      body('password').notEmpty().withMessage('Password is required')
+
+  ],
+
+  resetPassword);
 
 module.exports = router;

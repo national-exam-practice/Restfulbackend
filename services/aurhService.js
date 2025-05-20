@@ -79,7 +79,48 @@ const generateToken = (userId) => {
   });
 };
 
+// this is the api to reset password 
+const resetPassword=async(userData)=>{
+   const { email, password } = userData;
+
+
+    // Hash password
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  // This is  to find and update the user password
+    const user = await prisma.users.findUnique({
+    where: {
+      email: email
+    }
+  });
+
+  if (!user) {
+    throw new ApiError('The user with the email you sent is not available in the system ', 404);
+  }
+  // updated user password
+  const updated_user = await prisma.users.update({
+    where:{
+      email:email
+    },
+    data:{
+      password:hashedPassword
+    }
+  })
+
+   return {
+    message: 'The password updated successfully!',
+    id: updated_user.id,
+    email: updated_user.email,
+    firstname: updated_user.firstname,  
+    lastname: updated_user.lastname,
+    role: updated_user.role,
+  };
+
+}
+
 module.exports = {
   registerUser,
-  loginUser
+  loginUser,
+  resetPassword
 };

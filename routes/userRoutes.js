@@ -398,6 +398,41 @@
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
+/**
+ * @swagger
+ * /api/v1/users/requests/{id}/exit:
+ *   patch:
+ *     summary: Process car exit
+ *     description: Record car exit and calculate charges
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Exit processed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   $ref: '#/components/schemas/RequestResponse'
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Already exited or invalid request
+ *       404:
+ *         description: Request not found
+ */
+
 
 const express = require('express');
 const { body } = require('express-validator');
@@ -416,8 +451,8 @@ router.post(
   [
     body('parkId').notEmpty().withMessage('Park ID is required'),
     body('spotId').notEmpty().withMessage('Spot ID is required'),
-    body('startTime').notEmpty().withMessage('Start time is required'),
-    body('endTime').notEmpty().withMessage('End time is required')
+    // body('startTime').notEmpty().withMessage('Start time is required'),
+    // body('endTime').notEmpty().withMessage('End time is required')
   ],
   userController.createRequest
 );
@@ -443,5 +478,6 @@ router.patch(
 
 // Cancel a request (user only)
 router.patch('/requests/:id/cancel', userController.cancelRequest);
+router.patch('/requests/:id/exit', userController.processExit);
 
 module.exports = router;

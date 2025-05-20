@@ -70,13 +70,14 @@ model Spot {
 
 model Request {
   id           String        @id @default(uuid())
-  startTime    DateTime
-  endTime      DateTime
+startTime    DateTime?     // Made optional
+  endTime      DateTime?     // Made optional
   status       RequestStatus @default(PENDING)
   userId       String
   parkId       String
   spotId       String
-  totalAmount  Float
+  plateNumber  String
+  totalAmount  Float         @default(0)
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -90,4 +91,6 @@ enum RequestStatus {
   PENDING
   APPROVED
   REJECTED
+  COMPLETED
+  CANCELLED
 }

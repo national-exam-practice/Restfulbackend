@@ -109,11 +109,25 @@ const cancelRequest = async (req, res, next) => {
   }
 };
 
+const processExit = async (req, res, next) => {
+  try {
+    const request = await requestService.exitCar(req.params.id);
+    res.status(200).json({
+      success: true,
+      data: request,
+      message: 'Car exit processed successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createRequest,
   getUserRequests,
   getParkOwnerRequests,
   getRequestById,
   updateRequestStatus,
-  cancelRequest
+  cancelRequest,
+  processExit
 };

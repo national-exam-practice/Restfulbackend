@@ -36,8 +36,10 @@ enum Role {
 
 model Park {
   id           String      @id @default(uuid())
+  code         String 
   name         String
   address      String
+  image_url     String
   totalSpots   Int
   hourlyRate   Float
   description  String?

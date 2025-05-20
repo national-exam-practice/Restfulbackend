@@ -3,6 +3,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const path = require('path')
 
 // This is to import routes
 const authRoutes = require('./routes/authRoutes');
@@ -171,6 +172,7 @@ app.use(morgan('dev'));
 
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/v1/auth', authRoutes);

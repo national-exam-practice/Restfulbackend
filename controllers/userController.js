@@ -95,7 +95,7 @@ const updateRequestStatus = async (req, res, next) => {
   }
 };
 
-// Cancel a request (user only)
+// Cancel a request BY  the driver 
 const cancelRequest = async (req, res, next) => {
   try {
     const request = await requestService.cancelRequest(req.params.id, req.user.id);

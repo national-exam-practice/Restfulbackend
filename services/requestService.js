@@ -1,6 +1,6 @@
 const prisma = require('../models');
 const { ApiError } = require('../utils/errors');
-
+// const { generateParkingTicket }=require('./ticketService');
 // Create a new parking request
 const createRequest = async (requestData, userId) => {
   const { parkId, spotId, startTime, endTime } = requestData;
@@ -104,7 +104,9 @@ const getUserRequests = async (userId) => {
       park: {
         select: {
           name: true,
-          address: true
+          address: true,
+          hourlyRate: true,
+
         }
       },
       spot: {
@@ -140,7 +142,9 @@ const getParkOwnerRequests = async (ownerId) => {
       park: {
         select: {
           name: true,
-          address: true
+          address: true,
+          hourlyRate: true
+          
         }
       },
       spot: {
@@ -278,6 +282,10 @@ const updateRequestStatus = async (requestId, status, userId) => {
       }
     }
   });
+   // Generate PDF ticket if approved
+    // if (status === 'APPROVED') {
+    //   updatedRequest.ticketUrl = await generateParkingTicket(updatedRequest);
+    // }
 
   return updatedRequest;
 };

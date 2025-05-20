@@ -1,18 +1,34 @@
 const prisma = require('../models');
 const { ApiError } = require('../utils/errors');
+const upload = require('../utils/uploadFile');
+const fs = require('fs');
+const path = require('path');
+
+// Helper function to handle file upload
+const handleFileUpload = (file) => {
+  if (!file) return null;
+  
+  // In production, we would upload to a cloud service like S3 here
+  // For now, we'll just return the local path
+  return `/uploads/${file.filename}`;
+};
 
 // Create a new park
-const createPark = async (parkData, ownerId) => {
-  const { name, address, totalSpots, hourlyRate, description } = parkData;
+const createPark = async (parkData, ownerId, file) => {
+  const { code, name, address, totalSpots, hourlyRate, description } = parkData;
+
+  const imageUrl = file ? handleFileUpload(file) : 'https://example.com/default-park-image.jpg';
 
   const park = await prisma.park.create({
     data: {
+      code,
       name,
       address,
-      totalSpots,
-      hourlyRate,
+      totalSpots: parseInt(totalSpots, 10),
+      hourlyRate: parseFloat(hourlyRate),   
       description,
-      ownerId
+      ownerId,
+      image_url: imageUrl
     }
   });
 
@@ -96,7 +112,7 @@ const getParkById = async (parkId) => {
 };
 
 // Update park details
-const updatePark = async (parkId, parkData, userId, userRole) => {
+const updatePark = async (parkId, parkData, userId, userRole, file) => {
   const park = await prisma.park.findUnique({
     where: {
       id: parkId
@@ -112,11 +128,26 @@ const updatePark = async (parkId, parkData, userId, userRole) => {
     throw new ApiError('Not authorized to update this park', 403);
   }
 
+  let imageUrl = park.image_url;
+  if (file) {
+    // Delete old image if it exists and is a local file
+    if (park.image_url && park.image_url.startsWith('/uploads/')) {
+      const oldImagePath = path.join(__dirname, '..', 'public', park.image_url);
+      fs.unlink(oldImagePath, (err) => {
+        if (err) console.error('Error deleting old image:', err);
+      });
+    }
+    imageUrl = handleFileUpload(file);
+  }
+
   const updatedPark = await prisma.park.update({
     where: {
       id: parkId
     },
-    data: parkData
+    data: {
+      ...parkData,
+      image_url: imageUrl
+    }
   });
 
   return updatedPark;
@@ -176,6 +207,14 @@ const deletePark = async (parkId, userId, userRole) => {
   // Check if user is owner of the park or an admin
   if (park.ownerId !== userId && userRole !== 'ADMIN') {
     throw new ApiError('Not authorized to delete this park', 403);
+  }
+
+  // Delete associated image if it exists and is a local file
+  if (park.image_url && park.image_url.startsWith('/uploads/')) {
+    const oldImagePath = path.join(__dirname, '..', 'public', park.image_url);
+    fs.unlink(oldImagePath, (err) => {
+      if (err) console.error('Error deleting old image:', err);
+    });
   }
 
   await prisma.park.delete({

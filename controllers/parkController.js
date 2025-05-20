@@ -10,7 +10,7 @@ const createPark = async (req, res, next) => {
       return next(new ApiError(errors.array()[0].msg, 400));
     }
 
-    const park = await parkService.createPark(req.body, req.user.id);
+    const park = await parkService.createPark(req.body, req.user.id, req.file);
     res.status(201).json({
       success: true,
       data: park,
@@ -88,7 +88,8 @@ const updatePark = async (req, res, next) => {
       req.params.id,
       req.body,
       req.user.id,
-      req.user.role
+      req.user.role,
+      req.file
     );
     res.status(200).json({
       success: true,

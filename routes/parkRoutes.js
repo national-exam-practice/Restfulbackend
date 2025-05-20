@@ -590,21 +590,26 @@ const { body } = require('express-validator');
 const { protect } = require('../middlewares/authMiddleware');
 const { authorize } = require('../middlewares/roleMiddleware');
 const parkController = require('../controllers/parkController');
+const upload = require('../utils/uploadFile');
 
 const router = express.Router();
 
 // Protect all routes
 // router.use(protect);
 
-// Create a new park (Owner only)
+// Create a new park (Owner only) this is to mean that the user with role owner can create a park
+// and the park will be in pending state until an admin approves it
 router.post(
   '/',
+  protect,
   authorize('OWNER'),
+  upload.single('image'),
   [
     body('name').notEmpty().withMessage('Park name is required'),
     body('address').notEmpty().withMessage('Address is required'),
     body('totalSpots').isInt({ min: 1 }).withMessage('Total spots must be at least 1'),
-    body('hourlyRate').isFloat({ min: 0 }).withMessage('Hourly rate must be a positive number')
+    body('hourlyRate').isFloat({ min: 0 }).withMessage('Hourly rate must be a positive number'),
+    body('code').notEmpty().withMessage('Park code cannot be empty!'),
   ],
   parkController.createPark
 );
@@ -624,11 +629,14 @@ router.get('/:id',protect, parkController.getParkById);
 // Update park (Owner of the park or Admin)
 router.put(
   '/:id',
+  protect,
+  upload.single('image'),
   [
     body('name').optional().notEmpty().withMessage('Park name cannot be empty'),
     body('address').optional().notEmpty().withMessage('Address cannot be empty'),
-    body('hourlyRate').optional().isFloat({ min: 0 }).withMessage('Hourly rate must be a positive number')
-  ],protect,
+    body('hourlyRate').optional().isFloat({ min: 0 }).withMessage('Hourly rate must be a positive number'),
+    body('code').optional().notEmpty().withMessage('Park code cannot be empty!')
+  ],
   parkController.updatePark
 );
 

@@ -55,6 +55,15 @@ const getAllParks = async (filters = {}) => {
           email: true
         }
       },
+      requests: {
+        select: {
+          id: true,
+          status: true,
+          totalAmount: true,
+
+        }
+      },
+
       _count: {
         select: {
           spots: true

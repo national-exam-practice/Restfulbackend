@@ -1,100 +1,8 @@
 const prisma = require('../models');
 const { ApiError } = require('../utils/errors');
-// const { generateParkingTicket }=require('./ticketService');
-// Create a new parking request
-// const createRequest = async (requestData, userId) => {
-//   const { parkId, spotId, startTime, endTime } = requestData;
 
-//   // Check if park exists and is approved
-//   const park = await prisma.park.findUnique({
-//     where: {
-//       id: parkId,
-//       isApproved: true
-//     }
-//   });
-
-//   if (!park) {
-//     throw new ApiError('Park not found or not approved', 404);
-//   }
-
-//   // Check if spot exists and belongs to the park
-//   const spot = await prisma.spot.findUnique({
-//     where: {
-//       id: spotId,
-//       parkId
-//     }
-//   });
-
-//   if (!spot) {
-//     throw new ApiError('Spot not found or does not belong to the specified park', 404);
-//   }
-
-//   // Parse dates
-//   const start = new Date(startTime);
-//   const end = new Date(endTime);
-
-//   if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-//     throw new ApiError('Invalid date format', 400);
-//   }
-
-//   if (start >= end) {
-//     throw new ApiError('End time must be after start time', 400);
-//   }
-
-//   // Check if the spot is available for the requested time
-//   const overlappingRequests = await prisma.request.findMany({
-//     where: {
-//       spotId,
-//       status: 'APPROVED',
-//       OR: [
-//         { 
-//           AND: [
-//             { startTime: { lte: end } },
-//             { endTime: { gte: start } }
-//           ]
-//         }
-//       ]
-//     }
-//   });
-
-//   if (overlappingRequests.length > 0) {
-//     throw new ApiError('Spot is not available for the requested time', 400);
-//   }
-
-//   // Calculate total amount based on hourly rate and duration
-//   const hours = Math.ceil((end - start) / (1000 * 60 * 60));
-//   const totalAmount = park.hourlyRate * hours;
-
-//   // Create the request
-//   const request = await prisma.request.create({
-//     data: {
-//       startTime: start,
-//       endTime: end,
-//       totalAmount,
-//       userId,
-//       parkId,
-//       spotId
-//     },
-//     include: {
-//       park: {
-//         select: {
-//           name: true,
-//           address: true,
-//           hourlyRate: true
-//         }
-//       },
-//       spot: {
-//         select: {
-//           spotNumber: true
-//         }
-//       }
-//     }
-//   });
-
-//   return request;
-// };
 const createRequest = async (requestData, userId) => {
-  const { parkId, spotId, startTime: inputStartTime, endTime: inputEndTime,plateNumber } = requestData;
+  const { parkId, spotId, startTime: inputStartTime, endTime: inputEndTime, plateNumber } = requestData;
 
   // Check park and spot (existing code)
   const park = await prisma.park.findUnique({ where: { id: parkId, isApproved: true } });
@@ -104,7 +12,10 @@ const createRequest = async (requestData, userId) => {
   if (!spot) throw new ApiError('Spot not found or does not belong to the park', 404);
 
   // Parse dates
-  let start, end;
+  const now = new Date();
+  let start = now;
+  let end = null;
+  
   if (inputStartTime) {
     start = new Date(inputStartTime);
     if (isNaN(start.getTime())) throw new ApiError('Invalid start time format', 400);
@@ -113,16 +24,10 @@ const createRequest = async (requestData, userId) => {
   if (inputEndTime) {
     end = new Date(inputEndTime);
     if (isNaN(end.getTime())) throw new ApiError('Invalid end time format', 400);
+    
+    // Validate end time must be after start time
+    if (end <= start) throw new ApiError('End time must be after start time', 400);
   }
-
-  // Validate end time if provided
-  if (end && start >= end) throw new ApiError('End time must be after start time', 400);
-
-  // Check if end is provided without start
-  if (end && !start) throw new ApiError('Start time is required when providing end time', 400);
-
-  // Determine if it's an ongoing session (no endTime)
-  const isOngoing = !end;
 
   // Check spot availability
   let overlappingRequests;
@@ -148,7 +53,7 @@ const createRequest = async (requestData, userId) => {
         status: 'APPROVED',
         OR: [
           { endTime: null }, // Existing ongoing session
-          { endTime: { gt: start || new Date() } } // Ends after the new session's start
+          { endTime: { gt: start } } // Ends after the new session's start
         ]
       }
     });
@@ -161,14 +66,19 @@ const createRequest = async (requestData, userId) => {
   // Calculate totalAmount if endTime is provided
   let totalAmount = 0;
   if (end) {
-    const hours = Math.ceil((end - start) / (1000 * 60 * 60));
-    totalAmount = park.hourlyRate * hours;
+    // Calculate exact duration in hours with no rounding
+    const durationMs = end - start;
+    const durationHours = durationMs / (1000 * 60 * 60);
+    // No minimum hours or rounding - exact time calculation
+    totalAmount = park.hourlyRate * durationHours;
+    // Round to 2 decimal places for currency
+    totalAmount = Math.round(totalAmount * 100) / 100;
   }
 
   // Create request with conditional fields
   const request = await prisma.request.create({
     data: {
-      startTime: start, // If undefined, Prisma uses default
+      startTime: start, 
       endTime: end,
       totalAmount,
       userId,
@@ -181,6 +91,7 @@ const createRequest = async (requestData, userId) => {
 
   return request;
 };
+
 // Get all requests for a user
 const getUserRequests = async (userId) => {
   const requests = await prisma.request.findMany({
@@ -193,7 +104,6 @@ const getUserRequests = async (userId) => {
           name: true,
           address: true,
           hourlyRate: true,
-
         }
       },
       spot: {
@@ -231,7 +141,6 @@ const getParkOwnerRequests = async (ownerId) => {
           name: true,
           address: true,
           hourlyRate: true
-          
         }
       },
       spot: {
@@ -359,7 +268,6 @@ const updateRequestStatus = async (requestId, status, userId) => {
   return updatedRequest;
 };
 
-
 // Cancel a request (user only)
 const cancelRequest = async (requestId, userId) => {
   const request = await prisma.request.findUnique({
@@ -410,8 +318,18 @@ const exitCar = async (requestId) => {
 
   const exitTime = new Date();
   const startTime = request.startTime || request.createdAt;
-  const hours = Math.ceil((exitTime - startTime) / (1000 * 60 * 60));
-  const totalAmount = Math.round((request.park.hourlyRate * hours) * 100) / 100;
+  
+  // Ensure exit time is always after start time
+  if (exitTime <= startTime) {
+    throw new ApiError('Exit time must be after start time', 400);
+  }
+  
+  // Calculate exact duration in hours with no rounding or minimum
+  const durationMs = exitTime - startTime;
+  const durationHours = durationMs / (1000 * 60 * 60);
+  
+  // Calculate exact amount based on precise time, no minimum
+  const totalAmount = Math.round((request.park.hourlyRate * durationHours) * 100) / 100;
 
   const updatedRequest = await prisma.request.update({
     where: { id: requestId },
